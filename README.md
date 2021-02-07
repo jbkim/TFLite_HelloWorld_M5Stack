@@ -1,6 +1,8 @@
 # TFLite_HelloWorld_M5Stack
 ## Tensorflow Lite HelloWorld 예제를 M5Stack에 포팅
 
+<img src="tflite_m5stack.gif" width="135" height="240" />
+
 ### TFLite 빌드
 ~~~
 make -f tensorflow/lite/micro/tools/make/Makefile TARGET=esp generate_hello_world_esp_project
