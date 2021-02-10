@@ -13,10 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-// #include "main_functions.h"
-#include <Arduino.h>
 #include <math.h>
-
 #include "tensorflow/lite/micro/all_ops_resolver.h"
 #include "constants.h"
 #include "model.h"
@@ -24,20 +21,6 @@ limitations under the License.
 #include "tensorflow/lite/micro/micro_error_reporter.h"
 #include "tensorflow/lite/micro/micro_interpreter.h"
 #include "tensorflow/lite/schema/schema_generated.h"
-
-#include <M5Stack.h>
-
-#define BLACK 0x0000
-#define WHITE 0xFFFF
-
-const int dot_radius = 10;
-// Size of the drawable area
-int width;
-int height;
-// Midpoint of the y axis
-int midpoint;
-// Pixels per unit of x_value
-int x_increment;
 
 // Globals, used for compatibility with Arduino-style sketches.
 namespace {
@@ -54,10 +37,6 @@ uint8_t tensor_arena[kTensorArenaSize];
 
 // The name of this function is important for Arduino compatibility.
 void setup() {
-  M5.begin();
-  Serial.begin(115200);
-  Serial.println("Loading Tensorflow model...");  
-
   // Set up logging. Google style is to avoid globals or statics because of
   // lifetime uncertainty, but since this has a trivial destructor it's okay.
   // NOLINTNEXTLINE(runtime-global-variables)
@@ -97,40 +76,10 @@ void setup() {
 
   // Keep track of how many inferences we have performed.
   inference_count = 0;
-
-  Serial.println("Starting inferences...");
-  M5.Lcd.drawString("TensorFlow Lite for Microcontrollers", 60, 0);  
-  width = M5.Lcd.width() - (dot_radius * 2);
-  height = M5.Lcd.height() - (dot_radius * 2);
-  midpoint = height / 2;
-  x_increment = static_cast<float>(width) / kXrange;
-
 }
 
 // The name of this function is important for Arduino compatibility.
 void loop() {
-#if 0
-    M5.update();
-
-    M5.Lcd.fillCircle(int(user_input * 50 + 3), int(140 - output->data.f[0] * 100), 8, BLACK);
-
-    user_input = user_input + 0.1;
-    if (user_input > 6.28) {
-        user_input = 0;
-    }
-    input->data.f[0] = user_input;
-    if (interpreter->Invoke() != kTfLiteOk) {
-        Serial.println("There was an error invoking the interpreter!");
-        Serial.print("Input: ");
-        Serial.println(user_input);
-        return;
-    }
-
-    M5.Lcd.fillCircle(int(user_input * 50 + 3), int(140 - output->data.f[0] * 100), 8, WHITE);
-    delay(10);
-#else
-
-  M5.update();
 
   // Calculate an x value to feed into the model. We compare the current
   // inference_count to the number of inferences per cycle to determine
@@ -160,25 +109,10 @@ void loop() {
   
   // Output the results. A custom HandleOutput function can be implemented
   // for each supported hardware target.
-  M5.Lcd.clear(BLACK);  
   HandleOutput(error_reporter, x, y);
-  int x_pos = dot_radius + static_cast<int>(x * x_increment);  
-  int y_pos;
-    if (y >= 0) {
-      // Since the display's y runs from the top down, invert y_value
-      y_pos = dot_radius + static_cast<int>(midpoint * (1.f - y));
-    } else {
-      // For any negative y_value, start drawing from the midpoint
-      y_pos =
-          dot_radius + midpoint + static_cast<int>(midpoint * (0.f - y));
-    }
-
-  // M5.Lcd.fillCircle(x, int(140 - output->data.f[0] * 100), 8, WHITE);
-  M5.Lcd.fillCircle(x_pos, y_pos, dot_radius, YELLOW);  
 
   // Increment the inference_counter, and reset it if we have reached
   // the total number per cycle
   inference_count += 1;
   if (inference_count >= kInferencesPerCycle) inference_count = 0;
-#endif  
 }
